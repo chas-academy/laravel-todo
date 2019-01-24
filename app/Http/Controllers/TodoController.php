@@ -4,9 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Todo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TodoController extends Controller
 {
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -14,19 +25,10 @@ class TodoController extends Controller
      */
     public function index()
     {
-        $todos = Todo::all();
+        $todos = Todo::all()->where('user_id', '=', Auth::user()->id);
         return view('todos.index', compact('todos', $todos));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -36,29 +38,15 @@ class TodoController extends Controller
      */
     public function store(Request $request)
     {
-        //
-    }
+        $data = $request->validate([
+            'title' => 'required'
+        ]);
+        
+        $data['user_id'] = Auth::user()->id;
+        
+        $todo = Todo::create($data);
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Todo  $todo
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Todo $todo)
-    {
-        dd($todo);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Todo  $todo
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Todo $todo)
-    {
-        //
+        return redirect('/')->with('success', 'Todo was successfully added');
     }
 
     /**
@@ -70,11 +58,17 @@ class TodoController extends Controller
      */
     public function update(Request $request, Todo $todo)
     {
-        // <-- ['title' => 'ny titel', 'completed' => 1, 'user_id' => 0];
         $todo_data = $request->all();
+        
+        if (!isset($todo_data['title'])) {
+            $todo->completed = $todo_data['completed'];
+        } else {
+            $todo->title = $todo_data['title'];
+        }
 
-        $todo = $todo_data;
         $todo->save();
+
+        return redirect('/')->with('success', 'Todo successfully updated');
     }
 
     /**
@@ -86,7 +80,7 @@ class TodoController extends Controller
     public function destroy(Todo $todo)
     {
         if ($todo->delete()) {
-            redirect('/');
+            return redirect('/')->with('success', 'Todo successfully deleted');
         }
     }
 }

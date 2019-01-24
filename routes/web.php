@@ -11,14 +11,10 @@
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', 'TodoController@index');
 
 Route::resource('todos', 'TodoController');
 
 Route::get('todos/{todo}/delete', 'TodoController@destroy');
 
 Auth::routes();
-
-Route::get('/home', 'HomeController@index')->name('home');
